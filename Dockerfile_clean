@@ -27,7 +27,7 @@ RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8080
 
 # Use start script that handles migrations + server startup
 CMD ["./start.sh"]
