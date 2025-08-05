@@ -7,7 +7,7 @@ import uvicorn
 import uuid
 
 # Create database tables
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 # Load daily content if database is empty
 def load_initial_data():
