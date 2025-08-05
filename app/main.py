@@ -55,9 +55,24 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Custom CORS origin checker for Vercel preview deployments
+def is_cors_allowed(origin: str) -> bool:
+    allowed_origins = settings.backend_cors_origins
+    
+    # Check exact matches first
+    if origin in allowed_origins:
+        return True
+    
+    # Allow Vercel preview deployments (consacration-app-frontend-*.vercel.app)
+    if origin and origin.startswith("https://consacration-app-frontend-") and origin.endswith(".vercel.app"):
+        return True
+    
+    return False
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"https://consacration-app-frontend.*\.vercel\.app",
     allow_origins=settings.backend_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],

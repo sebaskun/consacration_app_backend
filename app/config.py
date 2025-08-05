@@ -22,13 +22,20 @@ class Settings(BaseSettings):
     # CORS
     def get_cors_origins(self) -> List[str]:
         cors_env = os.getenv("BACKEND_CORS_ORIGINS", "")
+        origins = []
+        
         if cors_env:
-            return [origin.strip() for origin in cors_env.split(",")]
-        return [
+            origins.extend([origin.strip() for origin in cors_env.split(",")])
+        
+        # Default development origins
+        default_origins = [
             "http://localhost:5173",
-            "http://localhost:3000",
+            "http://localhost:3000", 
             "http://localhost:8080"
         ]
+        origins.extend(default_origins)
+        
+        return list(set(origins))  # Remove duplicates
     
     @property
     def backend_cors_origins(self) -> List[str]:
