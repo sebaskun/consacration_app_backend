@@ -59,8 +59,7 @@ app = FastAPI(
 if settings.environment == "production":
     # Production: Only allow specific frontend domain
     cors_origins = [
-        "https://your-frontend-domain.vercel.app",  # Replace with actual domain
-        "https://totus-tuus.vercel.app",           # Example production domain
+        "https://consacration-app-frontend.vercel.app",  # Your Vercel frontend domain
     ]
     cors_methods = ["GET", "POST", "PUT", "DELETE"]
     cors_headers = ["Content-Type", "Authorization"]
