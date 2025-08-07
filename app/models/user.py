@@ -12,6 +12,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     current_day = Column(Integer, default=1)
+    libre_mode = Column(Boolean, default=False)
     start_date = Column(DateTime, default=func.now())
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())

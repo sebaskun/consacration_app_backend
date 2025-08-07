@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.controllers.users import UserController
-from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.user import UserResponse, UserUpdate, LibreModeToggle
 from app.schemas.content import UserProgressCreate, UserProgressResponse, UserProgressSummary
 from app.models.user import User
-from app.utils.rate_limiter import progress_rate_limiter
+from app.utils.rate_limiter import progress_rate_limiter, libre_mode_rate_limiter
 from fastapi.security import HTTPBearer
 from typing import List
 
@@ -44,7 +44,6 @@ def update_progress(
     """Update user progress for a specific day"""
     # Check rate limit
     is_allowed, remaining = progress_rate_limiter.is_allowed(current_user.id)
-    print("user_progress", progress_data)
     
     if not is_allowed:
         retry_after = progress_rate_limiter.get_retry_after(current_user.id)
@@ -67,6 +66,50 @@ def update_progress(
 def get_dashboard(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get all dashboard data for the user (profile, progress, available day, daily content)"""
     return UserController.get_dashboard_data(current_user, db)
+
+@router.put("/libre-mode", response_model=UserResponse)
+def toggle_libre_mode(
+    libre_mode_data: LibreModeToggle,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Toggle libre mode for user"""
+    # Check rate limit for libre mode changes
+    is_allowed, remaining = libre_mode_rate_limiter.is_allowed(current_user.id)
+    
+    if not is_allowed:
+        retry_after = libre_mode_rate_limiter.get_retry_after(current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "message": "Demasiados cambios de modo libre. Intenta de nuevo más tarde.",
+                "retry_after": retry_after,
+                "remaining_requests": 0
+            }
+        )
+    
+    try:
+        # Validate user can change libre mode (business rule validation)
+        if current_user.current_day > 33:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se puede cambiar el modo libre después de completar la consagración"
+            )
+        
+        # Update with transaction safety
+        current_user.libre_mode = libre_mode_data.libre_mode
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al actualizar el modo libre"
+        )
 
 @router.delete("/account")
 def delete_account(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

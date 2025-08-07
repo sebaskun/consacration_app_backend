@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -33,5 +33,5 @@ class UserProgress(Base):
     # Relationship
     user = relationship("User", back_populates="progress")
     
-    class Config:
-        unique_together = ("user_id", "day") 
+    # Unique constraint to prevent duplicate progress for same user/day
+    __table_args__ = (UniqueConstraint('user_id', 'day', name='unique_user_day_progress'),) 

@@ -1,10 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Dict, Tuple
 
-RATE_LIMIT = 100000
+# Rate limits for different operations
+PROGRESS_RATE_LIMIT = 10      # Progress updates: 10 per 5 minutes (normal spiritual practice)
+AUTH_RATE_LIMIT = 5           # Login attempts: 5 per 5 minutes (prevent brute force)
+GENERAL_RATE_LIMIT = 60       # General API: 60 per 5 minutes (dashboard, content)
+LIBRE_MODE_RATE_LIMIT = 2     # Libre mode toggle: 2 per hour (prevent abuse)
 
 class RateLimiter:
-    def __init__(self, max_requests: int = RATE_LIMIT, window_seconds: int = 300):  # 10 requests per 5 minutes
+    def __init__(self, max_requests: int = GENERAL_RATE_LIMIT, window_seconds: int = 300):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests: Dict[str, list] = {}  # user_id -> list of timestamps
@@ -51,5 +55,8 @@ class RateLimiter:
             return int((window_end - now).total_seconds())
         return 0
 
-# Global rate limiter instance
-progress_rate_limiter = RateLimiter(max_requests=10, window_seconds=300)  # 10 requests per 5 minutes 
+# Global rate limiter instances
+progress_rate_limiter = RateLimiter(max_requests=PROGRESS_RATE_LIMIT, window_seconds=300)
+auth_rate_limiter = RateLimiter(max_requests=AUTH_RATE_LIMIT, window_seconds=300)
+general_rate_limiter = RateLimiter(max_requests=GENERAL_RATE_LIMIT, window_seconds=300)
+libre_mode_rate_limiter = RateLimiter(max_requests=LIBRE_MODE_RATE_LIMIT, window_seconds=3600)  # 1 hour 

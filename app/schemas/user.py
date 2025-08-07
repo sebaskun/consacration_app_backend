@@ -21,11 +21,26 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('La contraseña debe tener al menos 8 caracteres')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('La contraseña debe contener al menos una letra mayúscula')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('La contraseña debe contener al menos una letra minúscula')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('La contraseña debe contener al menos un número')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+            raise ValueError('La contraseña debe contener al menos un carácter especial')
+        return v
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     current_day: Optional[int] = None
+    libre_mode: Optional[bool] = None
 
     @validator('email')
     def validate_email_provider(cls, v):
@@ -44,6 +59,7 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: str
     current_day: int
+    libre_mode: bool
     start_date: datetime
     is_active: bool
     created_at: datetime
@@ -68,4 +84,7 @@ class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
-    user: UserResponse 
+    user: UserResponse
+
+class LibreModeToggle(BaseModel):
+    libre_mode: bool 

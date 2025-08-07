@@ -177,8 +177,8 @@ class UserController:
         
         if current_day_completed and current_day < 33:
             # Current day is completed, check if user can advance to next day
-            if settings.debug_mode:
-                # DEBUG MODE: Allow immediate advancement
+            if settings.debug_mode or current_user.libre_mode:
+                # DEBUG MODE or LIBRE MODE: Allow immediate advancement
                 current_user.current_day = min(current_day + 1, 33)
                 db.commit()
                 current_day = current_user.current_day
@@ -188,10 +188,17 @@ class UserController:
                 if completed_at.tzinfo is None:
                     completed_at = pytz.UTC.localize(completed_at)
                 
-                # Calculate when next day becomes available (midnight next day)
-                next_available_time = (completed_at + timedelta(days=1)).replace(
+                # Convert to Peru timezone (UTC-5)
+                peru_tz = pytz.timezone('America/Lima')
+                completed_at_peru = completed_at.astimezone(peru_tz)
+                
+                # Calculate when next day becomes available (midnight next day in Peru time)
+                next_day_peru = (completed_at_peru + timedelta(days=1)).replace(
                     hour=0, minute=0, second=0, microsecond=0
                 )
+                
+                # Convert back to UTC for storage and comparison
+                next_available_time = next_day_peru.astimezone(pytz.UTC)
                 
                 if now >= next_available_time:
                     # Timer expired, advance to next day
@@ -225,8 +232,8 @@ class UserController:
             db.commit()
             db.refresh(user_progress)
         
-        # Clear timer in debug mode or if current day is not completed
-        if settings.debug_mode or not current_day_completed:
+        # Clear timer in debug mode, libre mode, or if current day is not completed
+        if settings.debug_mode or current_user.libre_mode or not current_day_completed:
             next_available_time = None
         
         # Add tasks to daily content

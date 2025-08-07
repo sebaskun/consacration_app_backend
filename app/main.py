@@ -7,7 +7,7 @@ import uvicorn
 import uuid
 
 # Create database tables
-# Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 # Load daily content if database is empty
 def load_initial_data():
@@ -55,28 +55,32 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Custom CORS origin checker for Vercel preview deployments
-def is_cors_allowed(origin: str) -> bool:
-    allowed_origins = settings.backend_cors_origins
-    
-    # Check exact matches first
-    if origin in allowed_origins:
-        return True
-    
-    # Allow Vercel preview deployments (consacration-app-frontend-*.vercel.app)
-    if origin and origin.startswith("https://consacration-app-frontend-") and origin.endswith(".vercel.app"):
-        return True
-    
-    return False
+# Configure CORS based on environment
+if settings.environment == "production":
+    # Production: Only allow specific frontend domain
+    cors_origins = [
+        "https://your-frontend-domain.vercel.app",  # Replace with actual domain
+        "https://totus-tuus.vercel.app",           # Example production domain
+    ]
+    cors_methods = ["GET", "POST", "PUT", "DELETE"]
+    cors_headers = ["Content-Type", "Authorization"]
+else:
+    # Development: Allow local development
+    cors_origins = [
+        "http://localhost:5173",    # Vite dev server
+        "http://127.0.0.1:5173",   # Alternative localhost
+        "http://localhost:3000",    # Alternative React port
+    ]
+    cors_methods = ["*"]
+    cors_headers = ["*"]
 
-# Add CORS middleware
+# Add CORS middleware with secure configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://consacration-app-frontend.*\.vercel\.app",
-    allow_origins=settings.backend_cors_origins,
+    allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=cors_methods,
+    allow_headers=cors_headers,
 )
 
 # Include routers
