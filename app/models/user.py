@@ -12,6 +12,8 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     current_day = Column(Integer, default=1)
+    start_day = Column(Integer, default=1)  # Día elegido para empezar la consagración
+    has_chosen_start_day = Column(Boolean, default=False)  # Flag para una sola elección
     libre_mode = Column(Boolean, default=False)
     start_date = Column(DateTime, default=func.now())
     is_active = Column(Boolean, default=True)

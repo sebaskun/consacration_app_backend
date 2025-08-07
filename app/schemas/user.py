@@ -59,6 +59,8 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: str
     current_day: int
+    start_day: int
+    has_chosen_start_day: bool
     libre_mode: bool
     start_date: datetime
     is_active: bool
@@ -87,4 +89,13 @@ class LoginResponse(BaseModel):
     user: UserResponse
 
 class LibreModeToggle(BaseModel):
-    libre_mode: bool 
+    libre_mode: bool
+
+class StartDaySelection(BaseModel):
+    start_day: int
+    
+    @validator('start_day')
+    def validate_start_day(cls, v):
+        if v < 1 or v > 33:
+            raise ValueError('El día de inicio debe estar entre 1 y 33')
+        return v 
